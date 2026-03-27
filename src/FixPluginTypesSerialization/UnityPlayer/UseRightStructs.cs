@@ -4,8 +4,11 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text;
+using System.Text.RegularExpressions;
 
 namespace FixPluginTypesSerialization.UnityPlayer
 {
@@ -48,6 +51,7 @@ namespace FixPluginTypesSerialization.UnityPlayer
 
         private static void InitializeUnityVersion()
         {
+            // 1. Check if user provided an override in the config file
             if (!Polyfills.StringIsNullOrWhiteSpace(Config.UnityVersionOverride.Value))
             {
                 if (TryInitializeUnityVersion(Config.UnityVersionOverride.Value))
@@ -58,6 +62,7 @@ namespace FixPluginTypesSerialization.UnityPlayer
                 Log.Error($"Unity version {Config.UnityVersionOverride.Value} has incorrect format.");
             }
 
+            // 2. Try to get version from the module (works mostly on Windows PE files)
             static bool IsUnityPlayer(ProcessModule p)
             {
                 return p.ModuleName.ToLowerInvariant().Contains("unityplayer");
@@ -68,10 +73,55 @@ namespace FixPluginTypesSerialization.UnityPlayer
                 .Cast<ProcessModule>()
                 .FirstOrDefault(IsUnityPlayer) ?? Process.GetCurrentProcess().MainModule;
 
-            if (TryInitializeUnityVersion(module.FileVersionInfo.FileVersion))
+            if (module?.FileVersionInfo?.FileVersion != null && TryInitializeUnityVersion(module.FileVersionInfo.FileVersion))
+            {
                 Log.Debug($"Unity version obtained from main application module.");
-            else
-                Log.Error($"Running under default Unity version. UnityVersionHandler is not initialized.");
+                return;
+            }
+
+            // 3. Linux/Fallback: Read the version directly from the game data files
+            var ggmVersion = TryGetVersionFromGlobalGameManagers();
+            if (!string.IsNullOrEmpty(ggmVersion) && TryInitializeUnityVersion(ggmVersion))
+            {
+                Log.Debug($"Unity version obtained from globalgamemanagers file.");
+                return;
+            }
+
+            Log.Error($"Running under default Unity version. UnityVersionHandler is not initialized.");
+        }
+
+        // Added this method to extract Unity version from binary data files on Linux
+        private static string TryGetVersionFromGlobalGameManagers()
+        {
+            try
+            {
+                // Find the _Data folder (e.g., Baldi_Data)
+                var dataFolder = Directory.GetDirectories(BepInEx.Paths.GameRootPath, "*_Data").FirstOrDefault();
+                if (dataFolder == null) return null;
+
+                // globalgamemanagers contains the Unity version string at the beginning
+                var ggmPath = Path.Combine(dataFolder, "globalgamemanagers");
+                if (!File.Exists(ggmPath)) return null;
+
+                using var fs = File.OpenRead(ggmPath);
+                using var br = new BinaryReader(fs);
+                
+                // Read first 256 bytes which usually contains the version string
+                var buffer = br.ReadBytes(256);
+                var rawData = Encoding.ASCII.GetString(buffer);
+                
+                // Search for version pattern like 2020.3.49
+                var match = Regex.Match(rawData, @"(\d{4})\.(\d{1,2})\.(\d{1,2})");
+                if (match.Success)
+                {
+                    return match.Value;
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"Failed to read globalgamemanagers: {ex.Message}");
+            }
+            return null;
         }
 
         private static bool TryInitializeUnityVersion(string version)
@@ -150,6 +200,13 @@ namespace FixPluginTypesSerialization.UnityPlayer
         private static void GatherUnityVersionSpecificHandlers()
         {
             CurrentHandlers.Clear();
+            
+            // Critical fix: prevent comparing null version which causes ArgumentNullException
+            if (UnityVersion == null)
+            {
+                return;
+            }
+
             foreach (var type in InterfacesOfInterest)
             {
                 foreach (var (version, handler) in VersionedHandlers[type])
@@ -202,6 +259,13 @@ namespace FixPluginTypesSerialization.UnityPlayer
 
         private static void SetUnityVersionSpecificMemStringId()
         {
+            // Default to legacy ID if version is unknown
+            if (UnityVersion == null)
+            {
+                LabelMemStringId = 0x3a;
+                return;
+            }
+
             if (UnityVersion >= new Version(2023, 1))
             {
                 LabelMemStringId = 0x9;
@@ -242,7 +306,7 @@ namespace FixPluginTypesSerialization.UnityPlayer
             {
                 LabelMemStringId = 0x42;
             }
-            else //5.0.0
+            else 
             {
                 LabelMemStringId = 0x3a;
             }

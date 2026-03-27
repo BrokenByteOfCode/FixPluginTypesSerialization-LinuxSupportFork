@@ -58,15 +58,33 @@ namespace FixPluginTypesSerialization
             DetourUnityPlayer();
         }
 
-        private static unsafe void DetourUnityPlayer()
+        private static IntPtr GetUnityPlayerBaseAddress()
         {
-            var unityDllPath = Path.Combine(BepInEx.Paths.GameRootPath, "UnityPlayer.dll");
-            //Older Unity builds had all functionality in .exe instead of UnityPlayer.dll
-            if (!File.Exists(unityDllPath))
+            // Parsing /proc/self/maps for find libs
+            if (Environment.OSVersion.Platform == PlatformID.Unix)
             {
-                unityDllPath = BepInEx.Paths.ExecutablePath;
+                try
+                {
+                    var maps = File.ReadAllLines("/proc/self/maps");
+                    foreach (var line in maps)
+                    {
+                        // Finding default loading UnityPlayer.so (offset is 00000000)
+                        if (line.Contains("UnityPlayer.so") && line.Contains(" 00000000 "))
+                        {
+                            var addrStr = line.Split('-')[0];
+                            IntPtr baseAddr = new IntPtr(Convert.ToInt64(addrStr, 16));
+                            Log.Info($"Linux UnityPlayer.so Base Address found: {baseAddr.ToString("X")}");
+                            return baseAddr;
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log.Error($"Error reading /proc/self/maps: {ex.Message}");
+                }
             }
 
+            // Fallback for Windows
             static bool IsUnityPlayer(ProcessModule p)
             {
                 return p.ModuleName.ToLowerInvariant().Contains("unityplayer");
@@ -76,7 +94,29 @@ namespace FixPluginTypesSerialization
                 .Cast<ProcessModule>()
                 .FirstOrDefault(IsUnityPlayer) ?? Process.GetCurrentProcess().MainModule;
 
-            var patternDiscoverer = new PatternDiscoverer(proc.BaseAddress, unityDllPath);
+            Log.Info($"UnityPlayer Base Address found via Process Modules: {proc.BaseAddress.ToString("X")}");
+            return proc.BaseAddress;
+        }
+
+        private static unsafe void DetourUnityPlayer()
+        {
+            var unityDllPath = Path.Combine(BepInEx.Paths.GameRootPath, "UnityPlayer.dll");
+            
+            // Older Unity builds had all functionality in .exe instead of UnityPlayer.dll
+            if (!File.Exists(unityDllPath))
+            {
+                unityDllPath = BepInEx.Paths.ExecutablePath;
+            }
+
+            IntPtr baseAddress = GetUnityPlayerBaseAddress();
+            
+            if (baseAddress == IntPtr.Zero)
+            {
+                Log.Error("Could not find UnityPlayer Base Address. Aborting detour.");
+                return;
+            }
+
+            var patternDiscoverer = new PatternDiscoverer(baseAddress, unityDllPath);
             CommonUnityFunctions.Init(patternDiscoverer);
 
             var awakeFromLoadPatcher = new AwakeFromLoad();
