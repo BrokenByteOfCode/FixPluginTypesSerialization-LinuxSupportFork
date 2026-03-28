@@ -11,7 +11,6 @@ namespace FixPluginTypesSerialization.UnityPlayer.Structs.v2021.v2
     {
         public IsFileCreatedParam()
         {
-
         }
 
         public IsFileCreatedParam(IntPtr pointer)

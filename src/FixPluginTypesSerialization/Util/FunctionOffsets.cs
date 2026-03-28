@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -876,7 +876,7 @@ namespace FixPluginTypesSerialization.Util
                                 case 48:
                                     return CreateOffsets(0x891B30, 0x895440, 0x00, 0x89A500, 0x7DAA90, 0x540680, 0x540620, 0x19BD800);
                                 case 49:
-                                    return CreateOffsets(0x891B70, 0x895270, 0x00, 0x89A2E0, 0x7DAAD0, 0x540680, 0x540620, 0x19BD800);
+                                    return CreateOffsets(0xFCFF00, 0xFCFAF0, 0x00, 0xFDDB00, 0xBDE100, 0xC2B3C0, 0xC2B480, 0x2083840);
                             }
                             break;
                     }

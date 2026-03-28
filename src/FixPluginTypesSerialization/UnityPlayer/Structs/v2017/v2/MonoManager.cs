@@ -17,7 +17,6 @@ namespace FixPluginTypesSerialization.UnityPlayer.Structs.v2017.v2
     {
         public MonoManager()
         {
-
         }
 
         public MonoManager(IntPtr pointer)

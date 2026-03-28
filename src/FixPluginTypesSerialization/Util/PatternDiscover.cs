@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using BepInEx.Configuration;
@@ -74,12 +74,16 @@ namespace FixPluginTypesSerialization.Util
                     return IntPtr.Zero;
                 }
 
-                return (IntPtr)(unityModule.ToInt64() + offset);
+                var result = (IntPtr)(unityModule.ToInt64() + offset);
+                DebugLogs.LogDiscovery(functionOffsetCache.Definition.Key, result);
+                return result;
             }
 
             if (long.TryParse(functionOffsetCache.Value, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out offset))
             {
-                return (IntPtr)(unityModule.ToInt64() + offset);
+                var result = (IntPtr)(unityModule.ToInt64() + offset);
+                DebugLogs.LogDiscovery(functionOffsetCache.Definition.Key, result);
+                return result;
             }
 
             return IntPtr.Zero;
@@ -109,7 +113,9 @@ namespace FixPluginTypesSerialization.Util
                 functionOffsetCache.Value = functionOffset.ToString("X2");
             }
 
-            return (IntPtr)(unityModule.ToInt64() + functionOffset.ToInt64());
+            var result = (IntPtr)(unityModule.ToInt64() + functionOffset.ToInt64());
+            DebugLogs.LogDiscovery(functionOffsetCache.Definition.Key, result);
+            return result;
         }
     }
 }

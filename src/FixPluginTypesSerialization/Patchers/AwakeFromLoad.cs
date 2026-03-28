@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Runtime.InteropServices;
 using System.Text;
 using FixPluginTypesSerialization.UnityPlayer;
@@ -46,22 +46,13 @@ namespace FixPluginTypesSerialization.Patchers
 
         private static unsafe void OnAwakeFromLoad(IntPtr _monoManager, int awakeMode)
         {
+            DebugLogs.HexDump(_monoManager, 0x100, "MonoManager");
             CurrentMonoManager = UseRightStructs.GetStruct<IMonoManager>(_monoManager);
-
             CurrentMonoManager.CopyNativeAssemblyListToManaged();
-
             IsAssemblyCreated.VanillaAssemblyCount = CurrentMonoManager.AssemblyCount;
-
             CurrentMonoManager.AddAssembliesToManagedList(FixPluginTypesSerializationPatcher.PluginPaths);
-
             CurrentMonoManager.AllocNativeAssemblyListFromManaged();
-
-            //CurrentMonoManager.PrintAssemblies();
-
             original(_monoManager, awakeMode);
-
-            // Dispose detours as we don't need them anymore
-            // and could hog resources for nothing otherwise
             IsFileCreated.Dispose();
             ConvertSeparatorsToPlatform.Dispose();
             IsAssemblyCreated.Dispose();

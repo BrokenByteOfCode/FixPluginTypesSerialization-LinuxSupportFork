@@ -8,7 +8,6 @@ namespace FixPluginTypesSerialization.UnityPlayer.Structs.v5.v0
     {
         public IsFileCreatedParam()
         {
-
         }
 
         public IsFileCreatedParam(IntPtr pointer)

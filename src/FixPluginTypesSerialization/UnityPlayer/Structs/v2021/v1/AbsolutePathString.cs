@@ -15,7 +15,6 @@ namespace FixPluginTypesSerialization.UnityPlayer.Structs.v2021.v1
     {
         public AbsolutePathString()
         {
-
         }
 
         public AbsolutePathString(IntPtr pointer)

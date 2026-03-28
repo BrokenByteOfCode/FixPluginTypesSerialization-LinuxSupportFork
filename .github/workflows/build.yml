@@ -1,0 +1,36 @@
+name: Build Plugin
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: 6.0.x
+
+    - name: Restore dependencies
+      run: dotnet restore src/FixPluginTypesSerialization/FixPluginTypesSerialization.csproj
+
+    - name: Build
+      run: dotnet build src/FixPluginTypesSerialization/FixPluginTypesSerialization.csproj -c Release --no-restore
+
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: FixPluginTypesSerialization-Build
+        path: |
+          src/FixPluginTypesSerialization/bin/Release/net35/FixPluginTypesSerialization.dll
+          src/FixPluginTypesSerialization/bin/Release/net40/FixPluginTypesSerialization.dll
+          src/FixPluginTypesSerialization/bin/Release/netstandard2.0/FixPluginTypesSerialization.dll
+          src/FixPluginTypesSerialization/bin/Release/netstandard2.1/FixPluginTypesSerialization.dll

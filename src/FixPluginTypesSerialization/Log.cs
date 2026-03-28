@@ -1,4 +1,5 @@
-﻿using BepInEx.Logging;
+using System;
+using BepInEx.Logging;
 
 namespace FixPluginTypesSerialization
 {
@@ -11,11 +12,35 @@ namespace FixPluginTypesSerialization
             _logSource = Logger.CreateLogSource("FixPluginTypesSerialization");
         }
 
-        internal static void Debug(object data) => _logSource.LogDebug(data);
-        internal static void Error(object data) => _logSource.LogError(data);
-        internal static void Fatal(object data) => _logSource.LogFatal(data);
-        internal static void Info(object data) => _logSource.LogInfo(data);
-        internal static void Message(object data) => _logSource.LogMessage(data);
-        internal static void Warning(object data) => _logSource.LogWarning(data);
+        internal static void Debug(object data)
+        {
+            if (_logSource == null) Console.WriteLine($"[EarlyDebug] {data}");
+            else _logSource.LogDebug(data);
+        }
+        internal static void Error(object data)
+        {
+            if (_logSource == null) Console.WriteLine($"[EarlyError] {data}");
+            else _logSource.LogError(data);
+        }
+        internal static void Fatal(object data)
+        {
+            if (_logSource == null) Console.WriteLine($"[EarlyFatal] {data}");
+            else _logSource.LogFatal(data);
+        }
+        internal static void Info(object data)
+        {
+            if (_logSource == null) Console.WriteLine($"[EarlyInfo] {data}");
+            else _logSource.LogInfo(data);
+        }
+        internal static void Message(object data)
+        {
+            if (_logSource == null) Console.WriteLine($"[EarlyMessage] {data}");
+            else _logSource.LogMessage(data);
+        }
+        internal static void Warning(object data)
+        {
+            if (_logSource == null) Console.WriteLine($"[EarlyWarning] {data}");
+            else _logSource.LogWarning(data);
+        }
     }
 }
