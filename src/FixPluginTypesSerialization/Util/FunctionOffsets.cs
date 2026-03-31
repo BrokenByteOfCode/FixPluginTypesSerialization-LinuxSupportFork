@@ -7,6 +7,8 @@ namespace FixPluginTypesSerialization.Util
 {
     public static class FunctionOffsets
     {
+        private static bool IsUnix => Environment.OSVersion.Platform == PlatformID.Unix;
+
         public static bool TryGet(Version unityVersion, out Dictionary<string, long> offsets)
         {
             offsets = IntPtr.Size == 4 ? Get32(unityVersion) : Get64(unityVersion);
@@ -876,7 +878,9 @@ namespace FixPluginTypesSerialization.Util
                                 case 48:
                                     return CreateOffsets(0x891B30, 0x895440, 0x00, 0x89A500, 0x7DAA90, 0x540680, 0x540620, 0x19BD800);
                                 case 49:
-                                    return CreateOffsets(0xFCFF00, 0xFCFAF0, 0x00, 0xFDDB00, 0xBDE100, 0xC2B3C0, 0xC2B480, 0x2083840);
+                                    return IsUnix ? 
+                                        CreateOffsets(0xFCFF00, 0xFCFAF0, 0x00, 0xFDDB00, 0xBDE100, 0xC2B3C0, 0xC2B480, 0x2083840) : 
+                                        CreateOffsets(0x891B70, 0x895270, 0x00, 0x89A2E0, 0x7DAAD0, 0x540680, 0x540620, 0x19BD800);
                             }
                             break;
                     }
