@@ -38,6 +38,14 @@ jobs:
           src/FixPluginTypesSerialization/bin/Release/netstandard2.0/FixPluginTypesSerialization.dll
           src/FixPluginTypesSerialization/bin/Release/netstandard2.1/FixPluginTypesSerialization.dll
 
+    - name: Prepare Files for Release
+      run: |
+        mkdir -p release_dist
+        cp src/FixPluginTypesSerialization/bin/Release/net35/FixPluginTypesSerialization.dll release_dist/FixPluginTypesSerialization-Unity5-Legacy.dll
+        cp src/FixPluginTypesSerialization/bin/Release/net40/FixPluginTypesSerialization.dll release_dist/FixPluginTypesSerialization-Unity2017.dll
+        cp src/FixPluginTypesSerialization/bin/Release/netstandard2.0/FixPluginTypesSerialization.dll release_dist/FixPluginTypesSerialization-Unity2018-2020.dll
+        cp src/FixPluginTypesSerialization/bin/Release/netstandard2.1/FixPluginTypesSerialization.dll release_dist/FixPluginTypesSerialization-Unity2021-Plus.dll
+
     - name: Create Release
       if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
       uses: softprops/action-gh-release@v2
@@ -47,10 +55,12 @@ jobs:
         body: |
           Automatic build from branch: ${{ github.ref_name }}
           Commit: ${{ github.sha }}
+          
+          TIP: Which file i should download?
+            For Unity 5.x or older: use **Unity5-Legacy**
+            For Unity 2017.x: use **Unity2017**
+            For Unity 2018.x to 2020.x: use **Unity2018-2020**
+            For Unity 2021.x or newer: use **Unity2021-Plus**
         draft: false
         prerelease: false
-        files: |
-          src/FixPluginTypesSerialization/bin/Release/net35/FixPluginTypesSerialization.dll
-          src/FixPluginTypesSerialization/bin/Release/net40/FixPluginTypesSerialization.dll
-          src/FixPluginTypesSerialization/bin/Release/netstandard2.0/FixPluginTypesSerialization.dll
-          src/FixPluginTypesSerialization/bin/Release/netstandard2.1/FixPluginTypesSerialization.dll
+        files: release_dist/*.dll
