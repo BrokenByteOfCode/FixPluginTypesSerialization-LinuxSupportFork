@@ -14,6 +14,7 @@ namespace FixPluginTypesSerialization.Patchers
         private delegate void AwakeFromLoadDelegate(IntPtr _monoManager, int awakeMode);
 
         private static AwakeFromLoadDelegate original;
+        private static AwakeFromLoadDelegate hookDelegate;
 
         private static NativeDetour _detour;
 
@@ -27,8 +28,8 @@ namespace FixPluginTypesSerialization.Patchers
 
         protected override unsafe void Apply(IntPtr from)
         {
-            var hookPtr =
-                Marshal.GetFunctionPointerForDelegate(new AwakeFromLoadDelegate(OnAwakeFromLoad));
+            hookDelegate = new AwakeFromLoadDelegate(OnAwakeFromLoad);
+            var hookPtr = Marshal.GetFunctionPointerForDelegate(hookDelegate);
 
             _detour = new NativeDetour(from, hookPtr, new NativeDetourConfig { ManualApply = true });
 

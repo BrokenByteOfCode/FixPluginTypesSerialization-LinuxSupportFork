@@ -13,6 +13,7 @@ namespace FixPluginTypesSerialization.Patchers
 
         private static NativeDetour _detour;
         private static ScriptingManagerDeconstructorDelegate orig;
+        private static ScriptingManagerDeconstructorDelegate hookDelegate;
 
         internal static bool IsApplied { get; private set; }
 
@@ -29,7 +30,9 @@ namespace FixPluginTypesSerialization.Patchers
 
         private void ApplyDetour(IntPtr from)
         {
-            var hookPtr = Marshal.GetFunctionPointerForDelegate(new ScriptingManagerDeconstructorDelegate(OnDeconstructor));
+            hookDelegate = new ScriptingManagerDeconstructorDelegate(OnDeconstructor);
+            var hookPtr = Marshal.GetFunctionPointerForDelegate(hookDelegate);
+            
             _detour = new NativeDetour(from, hookPtr, new NativeDetourConfig { ManualApply = true });
 
             orig = _detour.GenerateTrampoline<ScriptingManagerDeconstructorDelegate>();

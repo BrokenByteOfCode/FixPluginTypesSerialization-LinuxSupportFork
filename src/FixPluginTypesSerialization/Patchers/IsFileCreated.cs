@@ -15,6 +15,7 @@ namespace FixPluginTypesSerialization.Patchers
         private delegate bool IsFileCreatedDelegate(IntPtr str);
 
         private static IsFileCreatedDelegate original;
+        private static IsFileCreatedDelegate hookDelegate;
 
         private static NativeDetour _detour;
 
@@ -27,8 +28,8 @@ namespace FixPluginTypesSerialization.Patchers
 
         protected override unsafe void Apply(IntPtr from)
         {
-            var hookPtr =
-                Marshal.GetFunctionPointerForDelegate(new IsFileCreatedDelegate(OnIsFileCreated));
+            hookDelegate = new IsFileCreatedDelegate(OnIsFileCreated);
+            var hookPtr = Marshal.GetFunctionPointerForDelegate(hookDelegate);
 
             _detour = new NativeDetour(from, hookPtr, new NativeDetourConfig { ManualApply = true });
 

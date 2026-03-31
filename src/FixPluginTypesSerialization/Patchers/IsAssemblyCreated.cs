@@ -12,6 +12,7 @@ namespace FixPluginTypesSerialization.Patchers
         private delegate bool IsAssemblyCreatedDelegate(IntPtr _monoManager, int index);
 
         private static IsAssemblyCreatedDelegate original;
+        private static IsAssemblyCreatedDelegate hookDelegate;
 
         private static NativeDetour _detour;
 
@@ -26,8 +27,8 @@ namespace FixPluginTypesSerialization.Patchers
 
         protected override unsafe void Apply(IntPtr from)
         {
-            var hookPtr =
-                Marshal.GetFunctionPointerForDelegate(new IsAssemblyCreatedDelegate(OnIsAssemblyCreated));
+            hookDelegate = new IsAssemblyCreatedDelegate(OnIsAssemblyCreated);
+            var hookPtr = Marshal.GetFunctionPointerForDelegate(hookDelegate);
 
             _detour = new NativeDetour(from, hookPtr, new NativeDetourConfig {ManualApply = true});
 

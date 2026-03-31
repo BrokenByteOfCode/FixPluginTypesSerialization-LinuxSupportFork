@@ -16,6 +16,7 @@ namespace FixPluginTypesSerialization.Patchers
 
         private static NativeDetour _detourConvertSeparatorsToPlatform;
         private static ConvertSeparatorsToPlatformDelegate originalConvertSeparatorsToPlatform;
+        private static ConvertSeparatorsToPlatformDelegate hookDelegate;
 
         internal static bool IsApplied { get; private set; }
 
@@ -26,7 +27,9 @@ namespace FixPluginTypesSerialization.Patchers
 
         protected override unsafe void Apply(IntPtr from)
         {
-            var hookPtr = Marshal.GetFunctionPointerForDelegate(new ConvertSeparatorsToPlatformDelegate(OnConvertSeparatorsToPlatformV1));
+            hookDelegate = new ConvertSeparatorsToPlatformDelegate(OnConvertSeparatorsToPlatformV1);
+            var hookPtr = Marshal.GetFunctionPointerForDelegate(hookDelegate);
+            
             _detourConvertSeparatorsToPlatform = new NativeDetour(from, hookPtr, new NativeDetourConfig { ManualApply = true });
             originalConvertSeparatorsToPlatform = _detourConvertSeparatorsToPlatform.GenerateTrampoline<ConvertSeparatorsToPlatformDelegate>();
 
